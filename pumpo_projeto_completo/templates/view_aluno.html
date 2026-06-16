@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>O meu Plano | Pumpo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/aluno.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>const ALUNO_TOKEN = "{{ token }}";</script>
+  </head>
+  <body>
+
+    <!-- TOASTS -->
+    <div id="toast-container"></div>
+
+    <!-- CELEBRAÇÃO PÓS-TREINO (com stats reais) -->
+    <div id="celebration-overlay" class="hidden">
+      <div class="celebration-content">
+        <span class="trophy-icon">🏆</span>
+        <h2>Treino Concluído!</h2>
+        <p id="cel-treino-nome" style="font-weight:800; color:var(--dark); margin-bottom:16px; font-size:1.05rem;"></p>
+        <div class="celebration-stats">
+          <div class="celebration-stat">
+            <strong id="cel-series">-</strong>
+            <span>Séries</span>
+          </div>
+          <div class="celebration-stat">
+            <strong id="cel-tempo">-</strong>
+            <span>Duração</span>
+          </div>
+          <div class="celebration-stat">
+            <strong id="cel-status" style="font-size:1rem;">-</strong>
+            <span>Status</span>
+          </div>
+        </div>
+        <p style="color:#64748b; font-size:0.9rem; margin-bottom:22px; line-height:1.5;">Mais um passo em direção ao seu objetivo. O seu corpo agradece o esforço de hoje!</p>
+        <button class="btn btn-primary btn-block" style="font-size:1.05rem;" onclick="fecharCelebracao()">
+          <i class="fa-solid fa-fire"></i> Incrível!
+        </button>
+      </div>
+    </div>
+
+    <!-- CABEÇALHO -->
+    <div class="app-header">
+      <div class="greeting" id="greeting-text">Olá,</div>
+      <h1>
+        <span id="header-name">{{ nome_aluno }}</span>
+        <span class="date-badge" id="header-date">--</span>
+      </h1>
+    </div>
+
+    <div class="container">
+
+      <!-- ABAS PRINCIPAIS -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('dieta')">
+          <i class="fa-solid fa-apple-whole"></i> Dieta
+        </button>
+        <button class="tab-btn" onclick="switchTab('compras')">
+          <i class="fa-solid fa-cart-shopping"></i> Compras
+        </button>
+        <button class="tab-btn" onclick="switchTab('treino')">
+          <i class="fa-solid fa-dumbbell"></i> Treino
+        </button>
+        <button class="tab-btn" onclick="switchTab('evolucao')">
+          <i class="fa-solid fa-chart-line"></i> Evolução
+        </button>
+      </div>
+
+      <!-- ===== ABA: DIETA ===== -->
+      <div id="tab-dieta" class="view-section active">
+
+        <!-- Card IA: Registar Refeição por foto -->
+        <div class="card-padrao bg-magic">
+          <div style="padding:18px;">
+            <div class="magic-header">
+              <h3><i class="fa-solid fa-camera"></i> Registar Refeição</h3>
+              <span class="badge badge-magic">IA Mágica</span>
+            </div>
+            <p class="magic-subtitle">Não encontrou no plano? Tire uma foto do prato e a IA calcula os macros automaticamente.</p>
+            <button class="btn btn-success btn-block" onclick="document.getElementById('modal-prato').style.display='flex'">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Analisar Foto do Prato
+            </button>
+          </div>
+        </div>
+
+        <!-- Hidratação -->
+        <div class="water-tracker">
+          <h3 class="water-title"><i class="fa-solid fa-droplet"></i> Hidratação Diária</h3>
+          <div class="water-controls">
+            <button class="water-btn" onclick="addWater(-250)" aria-label="Remover 250ml">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <div style="text-align:center;">
+              <strong class="water-current" id="water-current">0</strong>
+              <span class="water-goal"> / <span id="water-goal">2000</span> ml</span>
+            </div>
+            <button class="water-btn" onclick="addWater(250)" aria-label="Adicionar 250ml">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+          <!-- Gotas visuais -->
+          <div class="water-emoji-row" id="water-drops">
+            <span class="water-drop">💧</span><span class="water-drop">💧</span>
+            <span class="water-drop">💧</span><span class="water-drop">💧</span>
+            <span class="water-drop">💧</span><span class="water-drop">💧</span>
+            <span class="water-drop">💧</span><span class="water-drop">💧</span>
+          </div>
+          <div class="progress-bg" style="margin-top:10px;">
+            <div class="progress-fill" id="water-bar" style="width:0%;"></div>
+          </div>
+        </div>
+
+        <!-- Resumo de Macros -->
+        <div class="card-padrao" id="macros-card" style="display:none;">
+          <div class="card-header border-none">
+            <span><i class="fa-solid fa-chart-pie text-primary" style="margin-right:6px;"></i>Resumo de Macros</span>
+          </div>
+          <div class="macros-container">
+            <div class="macros-chart-box">
+              <canvas id="macroChart"></canvas>
+              <div class="macros-total-cal">
+                <strong id="macro-kcal-val">0</strong>
+                <span>KCAL</span>
+              </div>
+            </div>
+            <div class="macros-list">
+              <div class="macro-item">
+                <span><span class="macro-dot dot-p"></span>Proteína</span>
+                <span id="macro-p-val">0g</span>
+              </div>
+              <div class="macro-item">
+                <span><span class="macro-dot dot-c"></span>Carbo</span>
+                <span id="macro-c-val">0g</span>
+              </div>
+              <div class="macro-item">
+                <span><span class="macro-dot dot-g"></span>Gordura</span>
+                <span id="macro-g-val">0g</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conteúdo da dieta (renderizado pelo JS) -->
+        <div id="dieta-content"></div>
+      </div>
+
+      <!-- ===== ABA: COMPRAS ===== -->
+      <div id="tab-compras" class="view-section">
+        <div class="tabs-inner">
+          <button class="tab-inner-btn active" id="btn-compras-lista" onclick="alternarAbaCompras('lista')">
+            <i class="fa-solid fa-list-check"></i> Minha Lista
+          </button>
+          <button class="tab-inner-btn" id="btn-compras-loja" onclick="alternarAbaCompras('loja')">
+            <i class="fa-solid fa-store"></i> Loja Parceira
+          </button>
+        </div>
+
+        <div id="compras-actions" style="display:none; text-align:right; margin-bottom:10px;">
+          <button class="btn btn-outline" style="padding:9px 16px; font-size:0.84rem;" onclick="compartilharListaCompras()">
+            <i class="fa-solid fa-share-nodes"></i> Compartilhar Lista
+          </button>
+        </div>
+
+        <div id="compras-content"></div>
+
+        <div id="loja-content" style="display:none;">
+          <div class="loja-filtros-container" id="loja-filtros"></div>
+          <div class="loja-grid" id="loja-grid"></div>
+        </div>
+      </div>
+
+      <!-- ===== ABA: TREINO ===== -->
+      <div id="tab-treino" class="view-section">
+
+        <div class="workout-day-selector">
+          <label>Qual é o treino de hoje?</label>
+          <div class="workout-cards-grid" id="workout-cards-container"></div>
+        </div>
+
+        <div id="bloco-iniciar-treino" style="display:none; text-align:center; margin-bottom:18px;">
+          <button class="btn btn-primary btn-block" style="padding:16px; font-size:1.05rem;" onclick="iniciarTreinoOficial()">
+            <i class="fa-solid fa-play"></i> Iniciar Treino
+          </button>
+        </div>
+
+        <div id="box-progresso-treino" style="display:none; margin-bottom:18px;">
+          <div class="card-padrao border-top-primary" style="padding:18px; text-align:center; margin-bottom:16px;">
+            <h3 id="treino-ativo-titulo" class="m-0 text-dark font-1-2"></h3>
+            <p id="treino-ativo-foco" class="mt-5 mb-15 text-muted font-0-85" style="margin-bottom:12px;"></p>
+            <div class="global-workout-timer">
+              <i class="fa-regular fa-clock"></i>
+              <span id="global-timer-display">00:00</span>
+            </div>
+          </div>
+          <div class="treino-progress-header">
+            <span class="treino-progress-label">Séries Concluídas</span>
+            <strong class="text-primary" id="treino-perc-text">0%</strong>
+          </div>
+          <div class="progress-bg bg-slate" style="margin-bottom:18px;">
+            <div class="progress-fill" id="treino-perc-bar" style="width:0%;"></div>
+          </div>
+        </div>
+
+        <div id="treino-content"></div>
+
+        <div id="btn-finalizar-treino-box" style="display:none; margin-bottom:28px;">
+          <button class="btn btn-success btn-block" style="padding:16px; font-size:1.05rem;" onclick="finalizarTreino()">
+            <i class="fa-solid fa-flag-checkered"></i> Finalizar Treino
+          </button>
+        </div>
+
+        <div id="btn-descanso-box" style="display:none; margin-bottom:28px;">
+          <div class="descanso-card">
+            <i class="fa-solid fa-bed fa-3x text-muted" style="margin-bottom:14px; opacity:0.5;"></i>
+            <h3 class="text-dark m-0 mb-10">Dia de Descanso</h3>
+            <p class="text-muted font-0-9 m-0 mb-20">A recuperação também faz parte do processo!</p>
+            <button class="btn btn-dark btn-block" onclick="finalizarDescanso()">
+              <i class="fa-solid fa-check"></i> Registar Descanso
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ABA: EVOLUÇÃO ===== -->
+      <div id="tab-evolucao" class="view-section">
+        <div id="evolucao-content"></div>
+      </div>
+
+    </div><!-- /container -->
+
+    <!-- CRONÔMETRO FLUTUANTE -->
+    <div id="floating-timer" class="floating-timer">
+      <i class="fa-solid fa-stopwatch timer-icon"></i>
+      <div>
+        <span class="timer-label">Descanso</span>
+        <span class="timer-text" id="timer-display">00:00</span>
+      </div>
+      <button class="timer-close" onclick="fecharCronometro()" aria-label="Fechar timer">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- FABs — com labels e ícones corretos -->
+    <div class="fab-container left">
+      <span class="fab-label">Avaliação Semanal</span>
+      <button class="fab-btn bg-primary" onclick="abrirCheckin()" aria-label="Abrir avaliação semanal">
+        <i class="fa-solid fa-calendar-check"></i>
+      </button>
+    </div>
+    <div class="fab-container right">
+      <span class="fab-label">Nutri Virtual IA</span>
+      <button class="fab-btn bg-success" onclick="document.getElementById('modal-ai-aluno').style.display='flex'" aria-label="Abrir chat com Nutri Virtual">
+        <i class="fa-solid fa-robot"></i>
+      </button>
+    </div>
+
+    <!-- ===== MODAIS ===== -->
+
+    <!-- Substituição de alimento -->
+    <div id="modal-subst" class="modal-overlay">
+      <div class="modal-box">
+        <button class="modal-close" onclick="document.getElementById('modal-subst').style.display='none'" aria-label="Fechar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h3><i class="fa-solid fa-rotate text-primary"></i> Substituir Alimento</h3>
+        <div id="subst-content" class="modal-body-gray"></div>
+        <button id="btn-copiar-subst" class="btn btn-dark btn-block mt-15 hidden" onclick="copiarSugestao()">
+          <i class="fa-solid fa-copy"></i> Copiar Sugestão
+        </button>
+      </div>
+    </div>
+
+    <!-- Analisar prato com IA -->
+    <div id="modal-prato" class="modal-overlay">
+      <div class="modal-box">
+        <button class="modal-close" onclick="document.getElementById('modal-prato').style.display='none'; resetarPrato();">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h3><i class="fa-solid fa-camera text-primary"></i> Analisar Refeição</h3>
+        <div class="file-upload-box" id="prato-upload-container">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <p>Toque para tirar foto do prato</p>
+          <input type="file" id="prato-foto" accept="image/*" capture="environment">
+        </div>
+        <img id="prato-preview" class="preview-img hidden" alt="Preview do prato">
+        <button class="btn btn-dark btn-block hidden" onclick="analisarPrato()" id="btn-analisar-prato">
+          <i class="fa-solid fa-brain"></i> Analisar Macros
+        </button>
+        <div id="prato-resultado" class="resultado-ia hidden"></div>
+        <button class="btn btn-success btn-block hidden" onclick="salvarNoDiario()" id="btn-salvar-diario">
+          <i class="fa-solid fa-save"></i> Guardar no Diário
+        </button>
+      </div>
+    </div>
+
+    <!-- Avaliação Semanal (Check-in melhorado) -->
+    <div id="modal-checkin" class="modal-overlay">
+      <div class="modal-box">
+        <button class="modal-close" onclick="document.getElementById('modal-checkin').style.display='none'">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h3><i class="fa-solid fa-calendar-check text-primary"></i> Avaliação Semanal</h3>
+
+        <label class="input-label">Como está o seu humor e energia?</label>
+        <div class="mood-selector" id="mood-selector">
+          <div class="mood-emoji" onclick="selectMood(this, '🤩 Incrível')" title="Incrível">🤩</div>
+          <div class="mood-emoji" onclick="selectMood(this, '🙂 Bem')" title="Bem">🙂</div>
+          <div class="mood-emoji" onclick="selectMood(this, '😐 Normal')" title="Normal">😐</div>
+          <div class="mood-emoji" onclick="selectMood(this, '😫 Cansado')" title="Cansado">😫</div>
+        </div>
+        <input type="hidden" id="checkin-mood">
+
+        <label class="input-label">Qualidade do Sono</label>
+        <select id="checkin-sono" class="modal-input">
+          <option value="">Selecione...</option>
+          <option value="Ótimo">😴 Ótimo (7h+ seguidas)</option>
+          <option value="Normal">🌙 Normal</option>
+          <option value="Ruim">😵 Ruim / Insônia</option>
+        </select>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label class="input-label">Peso (kg)</label>
+            <input type="number" id="checkin-peso" class="modal-input" placeholder="Ex: 75.5" inputmode="decimal" step="0.1">
+          </div>
+          <div>
+            <label class="input-label">Cintura (cm)</label>
+            <input type="number" id="checkin-cintura" class="modal-input" placeholder="Ex: 82" inputmode="numeric">
+          </div>
+        </div>
+
+        <label class="input-label">Como foram os treinos e a dieta?</label>
+        <textarea id="checkin-feedback" class="modal-input" rows="3" placeholder="Dificuldades, conquistas, dúvidas..."></textarea>
+
+        <button class="btn btn-primary btn-block mt-15" onclick="enviarCheckin()" id="btn-enviar-checkin">
+          <i class="fa-solid fa-paper-plane"></i> Enviar Avaliação
+        </button>
+      </div>
+    </div>
+
+    <!-- Execução de exercício -->
+    <div id="modal-exercicio" class="modal-overlay">
+      <div class="modal-box">
+        <button class="modal-close" onclick="document.getElementById('modal-exercicio').style.display='none'">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h3><i class="fa-solid fa-dumbbell text-primary"></i> Como Executar</h3>
+        <h4 id="exec-titulo" class="exec-titulo"></h4>
+        <div id="exec-content" class="modal-body-gray"></div>
+      </div>
+    </div>
+
+    <!-- Chat Nutri Virtual -->
+    <div id="modal-ai-aluno" class="modal-overlay chat-overlay">
+      <div class="chat-container">
+        <div class="chat-header">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:1rem;">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+            <div>
+              <h3 class="m-0" style="font-size:1rem;">Nutri Virtual</h3>
+              <span style="font-size:0.72rem; color:rgba(255,255,255,0.75);">● Online agora</span>
+            </div>
+          </div>
+          <button class="modal-close" style="position:static; background:rgba(255,255,255,0.18); color:white; width:32px; height:32px;" onclick="document.getElementById('modal-ai-aluno').style.display='none'">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <!-- Mensagem de boas-vindas estática -->
+        <div id="chat-area" class="chat-area">
+          <div class="chat-bubble-ai">
+            <div class="chat-ai-avatar"><i class="fa-solid fa-leaf"></i></div>
+            <div>Olá! 🌱 Sou o seu Nutri Virtual. Pode perguntar sobre substituições de alimentos, dúvidas de treino ou hábitos. Como posso ajudar?</div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <input type="text" id="ai-prompt" placeholder="Pergunte algo..." autocomplete="off">
+          <button onclick="enviarParaIA()" id="btn-enviar-ia" aria-label="Enviar mensagem">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/aluno.js') }}"></script>
+  </body>
+</html>
