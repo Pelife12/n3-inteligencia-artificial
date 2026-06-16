@@ -4,7 +4,7 @@ import urllib.parse
 
 ia_bp = Blueprint('ia', __name__)
 
-GEMINI_API_KEY = "AIzaSyBmcaArq-F1irPtkQASD6GJjxOQk9RU15I"
+GEMINI_API_KEY = "Gere uma chave API no ambiente do Google"
 MODELO_IA = "gemini-3.1-flash-lite-preview"
 TIMEOUT_IA = 30
 
