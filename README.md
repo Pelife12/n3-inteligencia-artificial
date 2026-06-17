@@ -81,6 +81,59 @@ Esta versão estabelece o MVP (Minimum Viable Product) do **Pumpo**, com foco 10
 * O algoritmo classificador probabilístico (*Naive Bayes*) para predição de evasão (Churn) de alunos foi movido para o roadmap da Versão 2.0.
  
 ---
+
+## ⚙️ Instruções de Execução (Como rodar o projeto localmente)
+
+### Pré-requisitos
+* Python 3.8+ instalado
+* Pip (Gerenciador de pacotes do Python)
+
+### Lista de Dependências do Projeto
+Para que a aplicação funcione corretamente, o sistema depende das seguintes bibliotecas:
+* **Flask**: Micro-framework web utilizado para construir as rotas e o servidor local.
+* **Requests**: Biblioteca HTTP para efetuar as requisições enviando as fotos e prompts para a API da Google.
+
+---
+
+### Passo a Passo para Configuração e Execução
+
+1. **Clone o repositório:**
+   ```bash
+   git clone [https://github.com/seu-usuario/pumpo.git](https://github.com/seu-usuario/pumpo.git)
+   cd pumpo
+   ```
+
+2. **Crie e ative um ambiente virtual (Recomendado):**
+   ```bash
+   python -m venv venv
+   # No Windows:
+   venv\Scripts\activate
+   # No Linux/Mac:
+   source venv/bin/activate
+   ```
+
+3. **Instale as dependências listadas:**
+   ```bash
+   pip install flask requests
+   ```
+
+4. **Gere e Configure sua Chave de API do Google Gemini:**
+   * Vá para o site oficial: [Google AI Studio](https://aistudio.google.com/)
+   * Faça login com a sua conta do Google.
+   * Clique no botão "Create API key" (Criar chave de API) e crie-a dentro de um projeto novo.
+   * Copie o código gerado que começa com `AIzaSy...`
+   * Abra o arquivo `ia.py` do seu projeto.
+   * Localize a linha `GEMINI_API_KEY = "COLE_AQUI_SUA_CHAVE_GERADA_NO_GOOGLE_AI_STUDIO"` e cole a sua chave dentro das aspas.
+
+5. **Execute o servidor:**
+   ```bash
+   python app.py
+   ```
+
+6. **Acesse a aplicação:**
+   * Abra o seu navegador web e digite o endereço: http://localhost:5000
+  
+---
  
 ## FAQ — Perguntas Frequentes
  
